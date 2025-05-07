@@ -5,10 +5,29 @@ import { useState } from "react";
 import {nanoid} from "nanoid";
 
 
-function App(props) {
-  const [tasks, setTasks] = useState(props.tasks);
+const FILTER_MAP = {
+  All: () => true,
+  Active: (task) => !task.completed,
+  Completed: (task) => task.completed,
+}
 
- 
+const FILTER_NAMES = Object.keys(FILTER_MAP);
+
+
+function App(props) {
+ const [tasks, setTasks] = useState(props.tasks);
+ const [filter, setFilter] = useState("All");
+
+ const filterList = FILTER_NAMES.map((name) => (
+  <FilterButton 
+  key ={name} 
+  name={name}
+  isPressed={name === filter}
+  setFilter={setFilter}
+  />
+ ));
+
+
 function toggleTaskCompleted(id){
   const updatedTasks = tasks.map((task) => {
     if(id === task.id){
@@ -24,7 +43,9 @@ function deleteTask(id){
    setTasks(remainingTasks);
   }
 
-  const taskList = tasks?.map((task) => (
+  const taskList = tasks
+  .filter(FILTER_MAP[filter])
+  .map((task) =>(
     <Todo
       id={task.id}
       name={task.name}
@@ -32,6 +53,8 @@ function deleteTask(id){
       key={task.id}
       toggleTaskCompleted={toggleTaskCompleted}
       deleteTask={deleteTask}
+      editTask={editTask}
+     
     />
     
   ));
@@ -41,6 +64,20 @@ function deleteTask(id){
   setTasks([...tasks, newTask]);
    
   }
+
+  function editTask(id, newName){
+    const editedTaskList = tasks.map((task) => {
+      if(id === task.id){
+        return {...task, name: newName};
+      }
+
+      return task;
+    });
+    setTasks(editedTaskList);
+
+  }
+ 
+
 
   const tasksNoun = taskList.length !== 1 ? "tasks" : "task";
   const headingText = `${taskList.length} ${tasksNoun} remaining`;
@@ -56,9 +93,7 @@ function deleteTask(id){
       <Form addTask={addTask} />
 
       <div className="filters btn-group stack-exception">
-        <FilterButton name="All" isSelected={true}/>
-        <FilterButton name="Active" isSelected={false}/>
-        <FilterButton name="Completed" isSelected={false} />
+       {filterList}
       </div>
 
       <h2 id="list-heading"> {headingText}</h2>
