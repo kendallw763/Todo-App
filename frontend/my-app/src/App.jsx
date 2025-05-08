@@ -1,9 +1,16 @@
 import Todo from "./Components/Todo";
 import Form from "./Components/Form";
 import FilterButton from "./Components/FilterButton";
-import { useState } from "react";
+import {useState, useRef, useEffect } from "react";
 import {nanoid} from "nanoid";
 
+function usePrevious(value){
+  const ref = useRef();
+  useEffect(() =>{
+    ref.current = value;
+  });
+  return ref.current;
+}
 
 const FILTER_MAP = {
   All: () => true,
@@ -14,8 +21,10 @@ const FILTER_MAP = {
 const FILTER_NAMES = Object.keys(FILTER_MAP);
 
 function App(props) {
+
  const [tasks, setTasks] = useState(props.tasks);
  const [filter, setFilter] = useState("All");
+ const listHeadingRef = useRef(null);
 
  const filterList = FILTER_NAMES.map((name) => (
   <FilterButton 
@@ -45,6 +54,7 @@ function deleteTask(id){
   const taskList = tasks
   .filter(FILTER_MAP[filter])
   .map((task) =>(
+    
     <Todo
       id={task.id}
       name={task.name}
@@ -75,13 +85,20 @@ function deleteTask(id){
     setTasks(editedTaskList);
 
   }
- 
-
 
   const tasksNoun = taskList.length !== 1 ? "tasks" : "task";
   const headingText = `${taskList.length} ${tasksNoun} remaining`;
+  const prevTaskLength = usePrevious(tasks.length);
+
+    useEffect(() => {
+      if(tasks.length < prevTaskLength){
+        listHeadingRef.current.focus();
+      }
+    },[tasks.length, prevTaskLength]);
+
 
   return (
+   
     <div className="todoapp stack-large">
       <h1> Todo Success Planner</h1> <br></br>
       <h3><bd>"Weather you think you can, or you think you cannot -- You're right" </bd>
@@ -95,7 +112,10 @@ function deleteTask(id){
        {filterList}
       </div>
 
-      <h2 id="list-heading"> {headingText}</h2>
+      <h2 id="list-heading"
+      tabIndex="-1" 
+      ref={listHeadingRef}>
+      {headingText}</h2>
       <ul
         role="list"
         className="todo-list stack-large stack-exception"
@@ -108,3 +128,4 @@ function deleteTask(id){
 }
 
 export default App;
+
